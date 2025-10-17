@@ -29,7 +29,7 @@ func main() {
 	db := repository.NewDatabaseHandler()
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
-
+	r.Get("/swagger/*", httpSwagger.WrapHandler)
 	// Render Frontend
 	staticFS, err := fs.Sub(embeddedFrontend, "frontend")
 	if err != nil {
@@ -47,7 +47,7 @@ func main() {
 	// OpenAPI Routes
 	r.Get("/openapi/*", httpSwagger.WrapHandler)
 
-	slog.Info("⚡⚡⚡ Order System is up and running ⚡⚡⚡")
+	slog.Info("⚡⚡⚡ Order System is up and buzzin ⚡⚡⚡")
 	err = http.ListenAndServe(":3000", r)
 	if err != nil {
 		log.Fatal(err)
