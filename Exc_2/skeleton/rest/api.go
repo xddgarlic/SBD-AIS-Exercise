@@ -15,9 +15,15 @@ import (
 // @Produce  		json
 // @Success 		200 {array} model.Drink
 // @Router 			/api/menu [get]
-func GetMenu(db *repository.DatabaseHandler) http.HandlerFunc {
+func GetMenu(repo *repository.Repository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		drinks := db.GetDrinks()
+		drinks, err := repo.GetDrinks()
+		if err != nil {
+			render.Status(r, http.StatusInternalServerError)
+			render.JSON(w, r, map[string]string{"error": err.Error()})
+			return
+		}
+
 		render.Status(r, http.StatusOK)
 		render.JSON(w, r, drinks)
 	}
@@ -29,9 +35,15 @@ func GetMenu(db *repository.DatabaseHandler) http.HandlerFunc {
 // @Produce  		json
 // @Success 		200 {array} model.Order
 // @Router 			/api/order/all [get]
-func GetOrders(db *repository.DatabaseHandler) http.HandlerFunc {
+func GetOrders(repo *repository.Repository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		orders := db.GetOrders()
+		orders, err := repo.GetOrders()
+		if err != nil {
+			render.Status(r, http.StatusInternalServerError)
+			render.JSON(w, r, map[string]string{"error": err.Error()})
+			return
+		}
+
 		render.Status(r, http.StatusOK)
 		render.JSON(w, r, orders)
 	}
@@ -43,11 +55,17 @@ func GetOrders(db *repository.DatabaseHandler) http.HandlerFunc {
 // @Produce  		json
 // @Success 		200 {object} map[uint64]uint64
 // @Router 			/api/order/total [get]
-func GetOrdersTotal(db *repository.DatabaseHandler) http.HandlerFunc {
+func GetOrdersTotal(repo *repository.Repository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		totalled := db.GetTotalledOrders()
+		totals, err := repo.GetTotalledOrders()
+		if err != nil {
+			render.Status(r, http.StatusInternalServerError)
+			render.JSON(w, r, map[string]string{"error": err.Error()})
+			return
+		}
+
 		render.Status(r, http.StatusOK)
-		render.JSON(w, r, totalled)
+		render.JSON(w, r, totals)
 	}
 }
 
@@ -60,7 +78,7 @@ func GetOrdersTotal(db *repository.DatabaseHandler) http.HandlerFunc {
 // @Success 		200
 // @Failure     	400
 // @Router 			/api/order [post]
-func PostOrder(db *repository.DatabaseHandler) http.HandlerFunc {
+func PostOrder(repo *repository.Repository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var order model.Order
 		if err := json.NewDecoder(r.Body).Decode(&order); err != nil {
@@ -69,7 +87,12 @@ func PostOrder(db *repository.DatabaseHandler) http.HandlerFunc {
 			return
 		}
 
-		db.AddOrder(&order)
+		if err := repo.AddOrder(&order); err != nil {
+			render.Status(r, http.StatusInternalServerError)
+			render.JSON(w, r, map[string]string{"error": err.Error()})
+			return
+		}
+
 		render.Status(r, http.StatusOK)
 		render.JSON(w, r, "ok")
 	}

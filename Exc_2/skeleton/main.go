@@ -26,7 +26,10 @@ var embeddedFrontend embed.FS
 // @description			This system enables drink orders and should not be used for the forbidden Hungover Games.
 // @contact.name		Your Name
 func main() {
-	db := repository.NewDatabaseHandler()
+	repo := repository.Connect()
+	repo.InitSchema()
+
+	log.Println("🚀 Ordersystem API starting...")
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Get("/swagger/*", httpSwagger.WrapHandler)
@@ -39,11 +42,11 @@ func main() {
 		http.ServeFileFS(w, r, staticFS, "index.html")
 	})
 	// Menu Routes
-	r.Get("/api/menu", rest.GetMenu(db))
+	r.Get("/api/menu", rest.GetMenu(repo))
 	// Order Routes
-	r.Get("/api/order/all", rest.GetOrders(db))
-	r.Get("/api/order/totalled", rest.GetOrdersTotal(db))
-	r.Post("/api/order", rest.PostOrder(db))
+	r.Get("/api/order/all", rest.GetOrders(repo))
+	r.Get("/api/order/totalled", rest.GetOrdersTotal(repo))
+	r.Post("/api/order", rest.PostOrder(repo))
 	// OpenAPI Routes
 	r.Get("/openapi/*", httpSwagger.WrapHandler)
 
