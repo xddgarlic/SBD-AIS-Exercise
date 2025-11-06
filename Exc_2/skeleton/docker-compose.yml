@@ -1,0 +1,41 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_DB: order
+      POSTGRES_USER: docker
+      POSTGRES_PASSWORD: docker
+    ports:
+      - "5432:5432"
+    networks:
+      - ordersystem-net
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  ordersystem:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ordersystem
+    environment:
+      POSTGRES_DB: order
+      POSTGRES_USER: docker
+      POSTGRES_PASSWORD: docker
+      POSTGRES_TCP_PORT: 5432
+      DB_HOST: postgres   # 👈 matches the Postgres service name
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+    networks:
+      - ordersystem-net
+
+networks:
+  ordersystem-net:
+    driver: bridge
+
+volumes:
+  postgres_data:

@@ -8,6 +8,7 @@ chmod +x ./scripts/*.sh 2>/dev/null || true
 
 # Step 1: Run Postgres
 echo "📦 Starting Postgres..."
+#!/bin/bash
 ./scripts/run-postgres.sh
 
 # Wait a few seconds for Postgres to initialize
