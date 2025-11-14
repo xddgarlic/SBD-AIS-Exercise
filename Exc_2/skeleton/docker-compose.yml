@@ -1,6 +1,19 @@
-version: '3.9'
-
 services:
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    command:
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+      - "--api.insecure=true"
+    ports:
+      - "80:80"     # HTTP
+      - "8080:8080" # Dashboard
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - ordersystem-net
+
   postgres:
     image: postgres:16-alpine
     container_name: postgres
@@ -8,12 +21,10 @@ services:
       POSTGRES_DB: order
       POSTGRES_USER: docker
       POSTGRES_PASSWORD: docker
-    ports:
-      - "5432:5432"
-    networks:
-      - ordersystem-net
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ordersystem-net
 
   ordersystem:
     build:
@@ -24,14 +35,28 @@ services:
       POSTGRES_DB: order
       POSTGRES_USER: docker
       POSTGRES_PASSWORD: docker
-      POSTGRES_TCP_PORT: 5432
-      DB_HOST: postgres   # 👈 matches the Postgres service name
-    ports:
-      - "3000:3000"
+      DB_HOST: postgres
+      DB_PORT: 5432
     depends_on:
       - postgres
     networks:
       - ordersystem-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ordersystem.rule=Host(`orders.localhost`)"
+      - "traefik.http.routers.ordersystem.entrypoints=web"
+
+  sws:
+    image: nginx:alpine
+    container_name: sws
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    networks:
+      - ordersystem-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sws.rule=Host(`localhost`)"
+      - "traefik.http.routers.sws.entrypoints=web"
 
 networks:
   ordersystem-net:
