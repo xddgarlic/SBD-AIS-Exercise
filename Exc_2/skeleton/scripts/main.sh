@@ -1,27 +1,29 @@
 #!/bin/sh
 set -e
 
-echo "🟢 Starting full Ordersystem stack..."
+echo "🛑 Stopping any running containers..."
+docker compose down
 
-# Step 0: Make sure helper scripts are executable
-chmod +x ./scripts/*.sh 2>/dev/null || true
+echo "🏗️ Building Ordersystem Docker image..."
+docker compose build --no-cache ordersystem
 
-# Step 1: Run Postgres
-echo "📦 Starting Postgres..."
-#!/bin/bash
-./scripts/run-postgres.sh
+echo "📦 Starting Postgres container..."
+docker compose up -d postgres
 
-# Wait a few seconds for Postgres to initialize
-echo "⏳ Waiting 5 seconds for Postgres to be ready..."
-sleep 5
+echo "⏳ Waiting for Postgres to be ready..."
 
-# Step 2: Build Orderservice
-echo "🏗️ Building Orderservice Docker image..."
-./scripts/build-orderservice.sh
+# Poll Postgres until it accepts connections
+until docker compose exec -T postgres pg_isready -U docker >/dev/null 2>&1; do
+    echo "Waiting for Postgres..."
+    sleep 2
+done
 
-# Step 3: Run Orderservice
-echo "🚀 Starting Orderservice container..."
-./scripts/run-orderservice.sh
+echo "✅ Postgres is ready!"
 
-echo "✅ Ordersystem stack is up and running!"
-echo "API available at http://localhost:3001/"
+echo "🚀 Starting Ordersystem API container..."
+# Start the Go API and attach to logs
+docker compose up ordersystem
+
+
+#chmod +x scripts/main.sh
+#./scripts/main.sh

@@ -2,20 +2,20 @@
 FROM golang:1.25 AS builder
 WORKDIR /app
 
+COPY go.mod go.sum ./
+RUN go mod download
 COPY . .
 
-RUN chmod +x scripts/build-application.sh && ./scripts/build-application.sh
+# Build a statically linked binary
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ordersystem .
 
 # --- Stage 2: Runner ---
 FROM alpine:latest
 WORKDIR /app
+RUN apk --no-cache add ca-certificates
 
-# Copy compiled binary from builder
 COPY --from=builder /app/ordersystem /app/ordersystem
-
-# Optional: verify it's executable
-RUN chmod +x /app/ordersystem && ls -l /app/ordersystem
+RUN chmod +x /app/ordersystem
 
 EXPOSE 3000
-
 CMD ["/app/ordersystem"]
