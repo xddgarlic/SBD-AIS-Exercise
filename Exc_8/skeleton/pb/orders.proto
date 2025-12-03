@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+option go_package = "exc8/pb";
+
+package models;
+
+// ----------------------
+// Messages
+// ----------------------
+
+message Drink {
+  int32 id = 1;
+  string name = 2;
+  int32 price = 3;
+  string description = 4;
+}
+
+message Order {
+  int32 drink_id = 1;
+  int32 quantity = 2;
+}
+
+// ----------------------
+// Responses
+// ----------------------
+
+message GetDrinksResponse {
+  repeated Drink drinks = 1;
+}
+
+message GetOrdersResponse {
+  repeated Order orders = 1;
+}
+
+message OrderDrinkRequest {
+  int32 drink_id = 1;
+  int32 quantity = 2;
+}
+
+// Empty response is fine (ack only)
+message OrderDrinkResponse {}
+
+// ----------------------
+// Service definition
+// ----------------------
+
+service OrderService {
+  rpc GetDrinks(google.protobuf.Empty)
+      returns (GetDrinksResponse);
+
+  rpc OrderDrink(OrderDrinkRequest)
+      returns (OrderDrinkResponse);
+
+  rpc GetOrders(google.protobuf.Empty)
+      returns (GetOrdersResponse);
+}
